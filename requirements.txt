@@ -1,0 +1,10 @@
+usearch==2.*
+stringzilla
+
+numpy
+numba # For faster similarity calculation
+rdkit # For RDKit, written in C++
+jpype1 # For Chemistry Development Kit, written in Java
+
+streamlit
+streamlit-ketcher
