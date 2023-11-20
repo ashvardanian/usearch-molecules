@@ -1,16 +1,15 @@
 from __future__ import annotations
 import os
-from datetime import datetime
+import random
 from dataclasses import dataclass
-from functools import cached_property
-from typing import Tuple, List, Optional, Union, Callable
+from typing import Tuple, List, Optional
 
 from tqdm import tqdm
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from usearch.index import Index, Matches, Key, Indexes
+from usearch.index import Index, Matches, Key
 import stringzilla as sz
 
 from usearch_molecules.to_fingerprint import (
@@ -252,11 +251,19 @@ class FingerprintedDataset:
         for match in results:
             shard = self.shard_containing(match.key)
             row = int(match.key - shard.first_key)
-            rows_smiles = shard.smiles
-            result = str(rows_smiles[row])
+            result = str(shard.smiles[row])
             filtered_results.append((match.key, result, match.distance))
 
         return filtered_results
+
+    def __len__(self) -> int:
+        return len(self.index)
+
+    def random_smiles(self) -> str:
+        shard_idx = random.randint(0, len(self.shards) - 1)
+        shard = self.shards[shard_idx]
+        row = random.randint(0, len(shard.smiles) - 1)
+        return str(shard.smiles[row])
 
 
 if __name__ == "__main__":

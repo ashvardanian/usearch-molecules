@@ -1,6 +1,7 @@
 """Fingerprints the molecules, encoding them with 4 techniques, producing 28 Billions fingerprints for 7 Billion molecules."""
 
 import os
+import logging
 from typing import List, Callable
 from multiprocessing import Process, cpu_count
 
@@ -11,20 +12,24 @@ import pyarrow.parquet as pq
 from usearch.index import Index, CompiledMetric, MetricKind, MetricSignature, ScalarKind
 from usearch.eval import self_recall, SearchStats
 
-from metrics import (
+from usearch_molecules.metrics_numba import (
     tanimoto_conditional,
     tanimoto_maccs,
 )
-from shared import (
-    log,
-    write_table,
+from usearch_molecules.to_fingerprint import (
     smiles_to_maccs_ecfp4_fcfp4,
     smiles_to_pubchem,
-    FingerprintedEntry.from_parts,
     shape_mixed,
     shape_maccs,
-    FingerprintedDataset,
 )
+
+from usearch_molecules.dataset import (
+    write_table,
+    FingerprintedDataset,
+    FingerprintedEntry,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def augment_with_rdkit(parquet_path: os.PathLike):
@@ -33,7 +38,7 @@ def augment_with_rdkit(parquet_path: os.PathLike):
     if "maccs" in column_names and "ecfp4" in column_names and "fcfp4" in column_names:
         return
 
-    log(f"Starting file {parquet_path}")
+    logger.info(f"Starting file {parquet_path}")
     table: pa.Table = pq.read_table(parquet_path)
     maccs_list = []
     ecfp4_list = []
@@ -68,7 +73,7 @@ def augment_with_cdk(parquet_path: os.PathLike):
     if "pubchem" in column_names:
         return
 
-    log(f"Starting file {parquet_path}")
+    logger.info(f"Starting file {parquet_path}")
     table: pa.Table = pq.read_table(parquet_path)
     pubchem_list = []
     for smiles in table["smiles"]:
@@ -98,7 +103,7 @@ def augment_parquets_shard(
             try:
                 filename = filenames[file_idx]
                 augmentation(os.path.join(parquet_dir, filename))
-                log(
+                logger.info(
                     "Augmented shard {}. Process # {} / {}".format(
                         filename, shard_index, shards_count
                     )
@@ -107,7 +112,7 @@ def augment_parquets_shard(
                 raise e
 
     except KeyboardInterrupt as e:
-        log(f"Stopping shard {shard_index} / {shards_count}")
+        logger.info(f"Stopping shard {shard_index} / {shards_count}")
         raise e
 
 
@@ -149,7 +154,7 @@ def shards_index(dataset: FingerprintedDataset):
             and Index.metadata(index_path_mixed) is not None
         ):
             continue
-        log(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
+        logger.info(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
         table = shard.load_table()
         n = len(table)
 
@@ -193,8 +198,8 @@ def shards_index(dataset: FingerprintedDataset):
 
         # Optional self-recall evaluation:
         stats: SearchStats = self_recall(index_maccs, sample=0.01)
-        log(f"Self-recall: {100*stats.mean_recall:.2f} %")
-        log(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
+        logger.info(f"Self-recall: {100*stats.mean_recall:.2f} %")
+        logger.info(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
         index_maccs.save(index_path_maccs)
 
         # Next construct the index for mixed MACCS and ECFP4 representations
@@ -228,8 +233,8 @@ def shards_index(dataset: FingerprintedDataset):
 
         # Optional self-recall evaluation:
         stats: SearchStats = self_recall(index_mixed, sample=0.01)
-        log(f"Self-recall: {100*stats.mean_recall:.2f} %")
-        log(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
+        logger.info(f"Self-recall: {100*stats.mean_recall:.2f} %")
+        logger.info(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
         index_mixed.save(index_path_mixed)
 
         # Discard the objects to save some memory
@@ -255,10 +260,10 @@ def mono_index_maccs(dataset: FingerprintedDataset):
     try:
         for shard_idx, shard in enumerate(dataset.shards):
             if shard.first_key in index_maccs:
-                log(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
+                logger.info(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
                 continue
 
-            log(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
+            logger.info(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
             table = shard.load_table(["maccs"])
             n = len(table)
 
@@ -284,8 +289,8 @@ def mono_index_maccs(dataset: FingerprintedDataset):
 
             # Optional self-recall evaluation:
             # stats: SearchStats = self_recall(index_maccs, sample=1000)
-            # log(f"Self-recall: {100*stats.mean_recall:.2f} %")
-            # log(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
+            # logger.info(f"Self-recall: {100*stats.mean_recall:.2f} %")
+            # logger.info(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
             if shard_idx % 100 == 0:
                 index_maccs.save(index_path_maccs)
 
@@ -319,10 +324,10 @@ def mono_index_mixed(dataset: FingerprintedDataset):
     try:
         for shard_idx, shard in enumerate(dataset.shards):
             if shard.first_key in index_mixed:
-                log(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
+                logger.info(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
                 continue
 
-            log(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
+            logger.info(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
             table = shard.load_table(["maccs", "ecfp4"])
             n = len(table)
 
@@ -349,8 +354,8 @@ def mono_index_mixed(dataset: FingerprintedDataset):
 
             # Optional self-recall evaluation:
             # stats: SearchStats = self_recall(index_mixed, sample=1000)
-            # log(f"Self-recall: {100*stats.mean_recall:.2f} %")
-            # log(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
+            # logger.info(f"Self-recall: {100*stats.mean_recall:.2f} %")
+            # logger.info(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
             if shard_idx % 50 == 0:
                 index_mixed.save(index_path_mixed)
 
@@ -365,28 +370,15 @@ def mono_index_mixed(dataset: FingerprintedDataset):
 
 
 if __name__ == "__main__":
-    log("Hello, Ash! Time to encode some molecules!")
+    logger.info("Time to encode some molecules!")
 
     processes = max(cpu_count() - 4, 1)
     # processes = 1
 
-    # augment_parquet_shards("data/pubchem/parquet/", augment_with_cdk, processes)
-    # augment_parquet_shards("data/gdb13/parquet/", augment_with_cdk, processes)
-    # augment_parquet_shards("data/real/parquet/", augment_with_cdk, processes)
+    augment_parquet_shards("data/pubchem/parquet/", augment_with_cdk, processes)
+    augment_parquet_shards("data/gdb13/parquet/", augment_with_cdk, processes)
+    augment_parquet_shards("data/real/parquet/", augment_with_cdk, processes)
 
-    # augment_parquet_shards("data/pubchem/parquet/", augment_with_rdkit, processes)
-    # augment_parquet_shards("data/gdb13/parquet/", augment_with_rdkit, processes)
-    # augment_parquet_shards("data/real/parquet/", augment_with_rdkit, processes)
-
-    # shards_index(FingerprintedDataset.open("data/pubchem"))
-    # shards_index(FingerprintedDataset.open("data/gdb13"))
-    # shards_index(FingerprintedDataset.open("data/real"))
-
-    # mono_index_maccs(FingerprintedDataset.open("data/pubchem"))
-    # mono_index_mixed(FingerprintedDataset.open("data/pubchem"))
-
-    mono_index_maccs(FingerprintedDataset.open("data/gdb13"))
-    mono_index_mixed(FingerprintedDataset.open("data/gdb13"))
-
-    # mono_index_maccs(FingerprintedDataset.open("data/real"))
-    # mono_index_mixed(FingerprintedDataset.open("data/real"))
+    augment_parquet_shards("data/pubchem/parquet/", augment_with_rdkit, processes)
+    augment_parquet_shards("data/gdb13/parquet/", augment_with_rdkit, processes)
+    augment_parquet_shards("data/real/parquet/", augment_with_rdkit, processes)

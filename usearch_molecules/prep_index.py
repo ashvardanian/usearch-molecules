@@ -1,4 +1,4 @@
-"""Fingerprints the molecules, encoding them with 4 techniques, producing 28 Billions fingerprints for 7 Billion molecules."""
+"""Indexes fingerprints using USearch."""
 
 import os
 import logging
@@ -263,7 +263,7 @@ def mono_index_mixed(dataset: FingerprintedDataset):
 
 
 if __name__ == "__main__":
-    logger.info("Time to encode some molecules!")
+    logger.info("Time to index some molecules!")
 
     processes = max(cpu_count() - 4, 1)
 

@@ -242,6 +242,8 @@ def export_parquet_shards(dataset: RawDataset, dir: os.PathLike, processes: int 
 
 
 if __name__ == "__main__":
+    logger.info("Time to pre-process some molecules!")
+
     processes = max(cpu_count() - 4, 1)
 
     export_parquet_shards(gdb13("data/gdb13"), "data/gdb13", processes)

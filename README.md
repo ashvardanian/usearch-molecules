@@ -1,6 +1,6 @@
 #  USearch Molecules
 
-![USearch Molecules 7B datataset thumbnail](USearchMolecules.png)
+![USearch Molecules 7B datataset thumbnail](/assets/USearchMolecules.jpg)
 
 USearch Molecules is a large Chem-Informatics dataset of small molecules.
 It includes __7'131'914'291 molecules__ with up to 50 "heavy" (non-hydrogen) atoms gathered from:
@@ -161,19 +161,28 @@ usearch.Index
 With those out of the way, you can now query the downloaded files:
 
 ```py
-smiles = [
-  'CC(O)C(CN)=NNCC(C)(C)C',
-  'C=C(C#C)C1=C2CN3CC3C2=NO1',
-  'CCC1C(=O)NC2(CCCC2)C(=O)N1CCC#C',
-]
+from usearch_molecules.dataset import FingerprintedDataset, shape_mixed
+
+data = FingerprintedDataset.open("data/example", shape=shape_mixed)
+
+# No inspiration? Pick a random molecule with `data.random_smiles()`
+results = data.search('CC(O)C(CN)=NNCC(C)(C)C', 100)
+
+results_keys = [r[0] for r in results]
+results_smiles = [r[1] for r in results]
+results_scores = [r[2] for r in results]
 ```
 
 ## Exploring Dataset via Graphical Interface
+
+The dataset also comes with Graphical sandbox implemented with StreamLit and 3DMol.js, to help visualize similarities between molecules.
 
 ```sh
 pip install streamlit stmol ipython_genutils
 streamlit run streamlit_app.py
 ```
+
+![USearch Molecules StreamLit demo preview](/assets/USearchMoleculesStreamLitPreview.gif)
 
 ## Methodology
 
