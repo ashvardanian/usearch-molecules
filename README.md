@@ -2,22 +2,22 @@
 
 ![USearch Molecules 7B datataset thumbnail](USearchMolecules.png)
 
-"USearch Molecules" is a large Chem-Informatics dataset of small molecules under 50 "heavy" atoms.
-It includes __7'131'914'291 molecules__ gathered from:
+USearch Molecules is a large Chem-Informatics dataset of small molecules.
+It includes __7'131'914'291 molecules__ with up to 50 "heavy" (non-hydrogen) atoms gathered from:
 
-- 115'034'339 molecules from the __pubchem__ dataset.
-- 977'468'301 molecules from the __gdb13__ dataset.
-- 6'039'411'651 molecules from the __real__ dataset.
+- 115'034'339 mecules from the __PubChem__ dataset.
+- 977'468'301 molules from the __GDB13__ dataset.
+- 6'039'411'651 molules from thEnamine __REAL__ dataset.
 
-All molecules have been encoded using `rdkit` and `cdk`, to produce binary fingerprints of four kinds:
+All molecules have been encoded using `rdkit` and `cdk` to produce binary fingerprints (structural embeddings) of four kinds:
 
 - __MACCS__: Molecular ACCess System keys with __166__ dimensions.
 - __PubChem__: Structure Fingerprints with __881__ dimensions.
 - __ECFP4__: Extended Connectivity Fingerprint of diameter 4 with __2048__ dimensions.
 - __FCFP4__: Functional Class Fingerprint of diameter 4 with __2048__ dimensions.
 
-Those fingerprints have then been indexed using [Unum's USearch](https://github.com/unum-cloud/usearch) to empower real-time search and clustering of moleculear structures for drug discovery and broader chemistry.
-The dataset is included into [AWS OpenData platform](https://registry.opendata.aws/usearch-molecules/) and is publicly available in the `s3://usearch-molecules` bucket, accessible even without AWS credentials, entirely anonymously:
+Those fingerprints were then indexed using [Unum's USearch](https://github.com/unum-cloud/usearch) to enable real-time search and clustering of molecular structures for drug discovery and broader chemistry.
+The dataset is included in [AWS Open Data platform](https://registry.opendata.aws/usearch-molecules/) and is publicly available from the `s3://usearch-molecules` bucket, accessible even without AWS credentials, entirely anonymously:
 
 ```sh
 aws s3 ls --no-sign-request s3://usearch-molecules
@@ -53,8 +53,8 @@ aws s3 ls --no-sign-request s3://usearch-molecules
 └── README.md
 ```
 
-Pre-constructed search and clustering indexes for Enamine REAL dataset are much harder to distribute and deploy.
-Those are not yet available in the bucket, but are available per request.
+Pre-constructed search and clustering indexes for the Enamine REAL dataset are much harder to distribute and deploy.
+Those are not yet available in the bucket but are available per request.
 To view the dataset structure, one can use Python:
 
 ```sh
@@ -78,8 +78,8 @@ In a tabular form that will look like:
 | 0    | CNCC(C)NC(=O)C1(C(C)(C)OC)CC1                              | 0x00000200000002002021227C488B9C02100615FFCC | 0x00733000000000000000000000001800000000000000000000000000000000000000001E00100000000E6CC18006020002C004000800011010000000000000000000810800000040160080001400000636008000000000000F80000000000000000000000000000000000000000000 | 0x40000000000000000000800000002400000000000000000000000000000000000000001000000200000000000000000000800000000000000000000000000000000000000002000000000002000000000020000000000100000000000000000000000000010000000040000000000000000000020000000800000000000000000000000048000000000000000000000280200000000000000000020000000000000000000000000000000100000000000000020000000000000000000400000001000000000000000000000000000000010004000000000000000000000800000000000000000000800000000000000400000000000000000010000020000000 | 0xE0001400000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000001000401000000000000000000000000400000000000000000000001000000000000000000000100080000004000000000000000000000000000000000000000000000000000000000000000004000800000000000000000000000000001000000200000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000004000000000000000001000000000000000000000080020000004000000000000000000000000000000000000000080 |
 | 1    | CN(C(=O)C1=CC2=C(F)C=C(F)C=C2N1)C1CN(C(=O)CC2=CC=CN=C2O)C1 | 0x00900000002000004011172DAC534CE55EF3EB7FFC | 0x007BB1800000000000000000000000005801600000003C400000000000000001F000001F00100800000C28C19E0C3EC4F3C99200A8033577540082802037222008D921BC6CDC0866F2C295B394710864D611C8D987BE99809E00000000000200000000000000040000000000000000 | 0x00000000000001000000800000200100000100000000000000000000000000020000000000000000040000000008002000000000000000808000000000000000000200000000000000000001000000000020000000000014000000001000200100000000014040000000000000104000000000020100400000000000000040100000110040000000880000200000000000100000000000000400000000000000000000000000000104040000080000000000000000080000000100000000000000000000000000042000000000004000020000000000014000004200200000000000000000008000002040000000000400800000000000000000004001000000 | 0xBE800000000000000001000000000000000080000000080000000000000000000000000000000000000200000000000000000000000900000000000000010000000000010000000000020000000000000000000000000000000000200000000000000080080000000000000000000000040000008000000000002000000080000000000000400004000000000000000010000000000000000000000000000000000000400000000000000014000000000008000000000000000000000000000000000800000000000000000000000400080000000000001000400000000100000000000000000040004000000000002404000000000000000002020040003180 |
 
-I've also added a tiny sample dataset under `data/example` directory, with only 2 shards totalling at 2 million entries, with pre-constructed indexes to simplify the entry.
-Those come handy if you want to test your application without downloading the whole dataset, or visualize a few molecules using the StreamLit app.
+I've also added a tiny sample dataset under the `data/example` directory, with only 2 shards totaling 2 million entries, with pre-constructed indexes to simplify the entry.
+Those come in handy if you want to test your application without downloading the whole dataset or visualize a few molecules using the StreamLit app.
 
 ```sh
 .
@@ -173,16 +173,6 @@ smiles = [
 ```sh
 pip install streamlit stmol ipython_genutils
 streamlit run streamlit_app.py
-```
-
-
-## Predict Molecule Properties using BARTSmiles
-
-```py
-!git clone https://github.com/YerevaNN/BARTSmiles.git
-!pip install -r BARTSmiles/requirements.txt
-!pip install fairseq
-
 ```
 
 ## Methodology
