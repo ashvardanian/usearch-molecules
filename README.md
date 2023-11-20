@@ -1,5 +1,7 @@
 #  USearch Molecules
 
+![USearch Molecules 7B datataset thumbnail](USearchMolecules.png)
+
 "USearch Molecules" is a large Chem-Informatics dataset of small molecules under 50 "heavy" atoms.
 It includes __7'131'914'291 molecules__ gathered from:
 
@@ -76,21 +78,41 @@ In a tabular form that will look like:
 | 0    | CNCC(C)NC(=O)C1(C(C)(C)OC)CC1                              | 0x00000200000002002021227C488B9C02100615FFCC | 0x00733000000000000000000000001800000000000000000000000000000000000000001E00100000000E6CC18006020002C004000800011010000000000000000000810800000040160080001400000636008000000000000F80000000000000000000000000000000000000000000 | 0x40000000000000000000800000002400000000000000000000000000000000000000001000000200000000000000000000800000000000000000000000000000000000000002000000000002000000000020000000000100000000000000000000000000010000000040000000000000000000020000000800000000000000000000000048000000000000000000000280200000000000000000020000000000000000000000000000000100000000000000020000000000000000000400000001000000000000000000000000000000010004000000000000000000000800000000000000000000800000000000000400000000000000000010000020000000 | 0xE0001400000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000001000401000000000000000000000000400000000000000000000001000000000000000000000100080000004000000000000000000000000000000000000000000000000000000000000000004000800000000000000000000000000001000000200000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000004000000000000000001000000000000000000000080020000004000000000000000000000000000000000000000080 |
 | 1    | CN(C(=O)C1=CC2=C(F)C=C(F)C=C2N1)C1CN(C(=O)CC2=CC=CN=C2O)C1 | 0x00900000002000004011172DAC534CE55EF3EB7FFC | 0x007BB1800000000000000000000000005801600000003C400000000000000001F000001F00100800000C28C19E0C3EC4F3C99200A8033577540082802037222008D921BC6CDC0866F2C295B394710864D611C8D987BE99809E00000000000200000000000000040000000000000000 | 0x00000000000001000000800000200100000100000000000000000000000000020000000000000000040000000008002000000000000000808000000000000000000200000000000000000001000000000020000000000014000000001000200100000000014040000000000000104000000000020100400000000000000040100000110040000000880000200000000000100000000000000400000000000000000000000000000104040000080000000000000000080000000100000000000000000000000000042000000000004000020000000000014000004200200000000000000000008000002040000000000400800000000000000000004001000000 | 0xBE800000000000000001000000000000000080000000080000000000000000000000000000000000000200000000000000000000000900000000000000010000000000010000000000020000000000000000000000000000000000200000000000000080080000000000000000000000040000008000000000002000000080000000000000400004000000000000000010000000000000000000000000000000000000400000000000000014000000000008000000000000000000000000000000000800000000000000000000000400080000000000001000400000000100000000000000000040004000000000002404000000000000000002020040003180 |
 
+I've also added a tiny sample dataset under `data/example` directory, with only 2 shards totalling at 2 million entries, with pre-constructed indexes to simplify the entry.
+Those come handy if you want to test your application without downloading the whole dataset, or visualize a few molecules using the StreamLit app.
+
+```sh
+.
+└── data
+    └── example # 1.8 GB
+        ├── index-maccs.usearch # 329 MB
+        ├── index-maccs-ecfp4.usearch # 817 MB
+        ├── parquet # 30 GB
+        │   ├── 0000000000-0001000000.parquet # 265 MB
+        │   └── 0001000000-0002000000.parquet # 265 MB
+        └── smiles # 30 GB
+            ├── 0000000000-0001000000.smi # 58 MB
+            └── 0001000000-0002000000.smi # 58 MB
+```
+
 ## Usage
+
+### Exploring Dataset via Command Line Interface
 
 First, install NumPy, RDKit, and USearch v2, and download the dataset:
 
 ```sh
 pip3 install git+https://github.com/ashvardanian/usearch-molecules.git@main
-aws s3 sync s3://usearch-molecules/data/ data/
+mkdir -p data/pubchem data/gdb13 data/real data/example
+aws s3 sync --no-sign-request s3://usearch-molecules/data/example data/example/
 ```
 
 If you need just one of the subsets:
 
 ```sh
-aws s3 sync s3://usearch-molecules/data/pubchem/ data/pubchem/
-aws s3 sync s3://usearch-molecules/data/gdb13/ data/gdb13/
-aws s3 sync s3://usearch-molecules/data/real/ data/real/
+aws s3 sync --no-sign-request s3://usearch-molecules/data/pubchem/ data/pubchem/
+aws s3 sync --no-sign-request s3://usearch-molecules/data/gdb13/ data/gdb13/
+aws s3 sync --no-sign-request s3://usearch-molecules/data/real/ data/real/
 ```
 
 You can immediately check if the indexes are readable:
@@ -146,31 +168,48 @@ smiles = [
 ]
 ```
 
+## Exploring Dataset via Graphical Interface
+
+```sh
+pip install streamlit stmol ipython_genutils
+streamlit run streamlit_app.py
+```
+
+
+## Predict Molecule Properties using BARTSmiles
+
+```py
+!git clone https://github.com/YerevaNN/BARTSmiles.git
+!pip install -r BARTSmiles/requirements.txt
+!pip install fairseq
+
+```
+
 ## Methodology
 
 ### Dataset Sources
 
 Original data came from:
 
-- __PubChem__: [CID-SMILES](ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz)
-- __GDB13__: [gdb13](https://zenodo.org/record/5172018/files/gdb13.tgz?download=1)
+- __PubChem__: [CID-SMILES](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz).gz
+- __GDB13__: [gdb13](https://zenodo.org/record/5172018/files/gdb13.tgz?download=1).tgz
 - Enamine __REAL__, split by Heavy Atom Counts:
-    - HAC 6-21: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_6_21_420M_CXSMILES.cxsmiles.bz2)
-    - HAC 22-23: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_22_23_471M_CXSMILES.cxsmiles.bz2)
-    - HAC 24: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_24_394M_CXSMILES.cxsmiles.bz2)
-    - HAC 25: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_25_557M_CXSMILES.cxsmiles.bz2)
+    - HAC 6-21: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_6_21_420M_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+    - HAC 22-23: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_22_23_471M_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+    - HAC 24: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_24_394M_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+    - HAC 25: [CXSMILES](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_25_557M_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
     - HAC 26:
-      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_26_833M_Part_1_CXSMILES.cxsmiles.bz2)
-      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_26_833M_Part_2_CXSMILES.cxsmiles.bz2)
+      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_26_833M_Part_1_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_26_833M_Part_2_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
     - HAC 27:
-      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_27_1.1B_Part_1_CXSMILES.cxsmiles.bz2)
-      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_27_1.1B_Part_2_CXSMILES.cxsmiles.bz2)
+      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_27_1.1B_Part_1_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_27_1.1B_Part_2_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
     - HAC 28:
-      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_28_1.2B_Part_1_CXSMILES.cxsmiles.bz2)
-      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_28_1.2B_Part_2_CXSMILES.cxsmiles.bz2)
+      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_28_1.2B_Part_1_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_28_1.2B_Part_2_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
     - HAC 29-38:
-      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_29_38_988M_Part_1_CXSMILES.cxsmiles.bz2)
-      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_29_38_988M_Part_2_CXSMILES.cxsmiles.bz2)
+      - [CXSMILES Part 1](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_29_38_988M_Part_1_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
+      - [CXSMILES Part 2](https://ftp.enamine.net/download/REAL/Enamine_REAL_HAC_29_38_988M_Part_2_CXSMILES.cxsmiles.bz2).cxsmiles.bz2
 
 ### Pre-processing Pipeline
 
@@ -185,6 +224,7 @@ Everything happens in a "gliding-window" fashion, with computationally intensive
 ```sh
 python prep_schedule.py # Prepare Parquet files
 python prep_encode.py # Build USearch indexes
+python prep_smiles.py # Export SMILES new-line delimited files to simplify serving
 ```
 
 Once completed, datasets have been uploaded to S3:

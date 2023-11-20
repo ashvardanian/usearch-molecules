@@ -14,6 +14,7 @@ from usearch.eval import self_recall, SearchStats
 
 from usearch_molecules.metrics_numba import (
     tanimoto_conditional,
+    tanimoto_mixed,
     tanimoto_maccs,
 )
 from usearch_molecules.dataset import (
@@ -206,7 +207,7 @@ def mono_index_mixed(dataset: FingerprintedDataset):
         ndim=shape_mixed.nbits,
         dtype=ScalarKind.B1,
         metric=CompiledMetric(
-            pointer=tanimoto_conditional.address,
+            pointer=tanimoto_mixed.address,
             kind=MetricKind.Tanimoto,
             signature=MetricSignature.ArrayArray,
         ),

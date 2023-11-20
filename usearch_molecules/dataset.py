@@ -127,7 +127,7 @@ class FingerprintedShard:
 
     def load_smiles(self) -> sz.Strs:
         if not self.smiles_caches:
-            self.smiles_caches = sz.File(self.smiles_path).splitlines()
+            self.smiles_caches = sz.Str(sz.File(self.smiles_path)).splitlines()
         return self.smiles_caches
 
 
@@ -161,7 +161,7 @@ class FingerprintedDataset:
             filename = filename.replace(".parquet", "")
             first_key = int(filename.split("-")[0])
             table_path = os.path.join(dir, "parquet", filename + ".parquet")
-            smiles_path = os.path.join(dir, "smiles", filename + ".smiles")
+            smiles_path = os.path.join(dir, "smiles", filename + ".smi")
 
             shard = FingerprintedShard(
                 first_key=first_key,
@@ -175,7 +175,7 @@ class FingerprintedDataset:
 
         index = None
         if shape:
-            index_path = os.path.join(dir, "usearch", shape.index_name)
+            index_path = os.path.join(dir, shape.index_name)
             if os.path.exists(index_path):
                 index = Index.restore(index_path)
 
@@ -230,7 +230,12 @@ class FingerprintedDataset:
             fingers = fingers[permutation]
         return smiles, keys, fingers
 
-    def search(self, smiles: str, count: 10) -> List[Tuple[int, str, float]]:
+    def search(
+        self,
+        smiles: str,
+        count: int = 10,
+        log: bool = False,
+    ) -> List[Tuple[int, str, float]]:
         """Search for similar molecules in the whole dataset."""
 
         fingers: tuple = smiles_to_maccs_ecfp4_fcfp4(smiles)
@@ -241,7 +246,7 @@ class FingerprintedDataset:
             fingers[2],
             self.shape,
         )
-        results: Matches = self.index.search(entry.fingerprint, count)
+        results: Matches = self.index.search(entry.fingerprint, count, log=log)
 
         filtered_results = []
         for match in results:

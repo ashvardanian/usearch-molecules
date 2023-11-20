@@ -4,7 +4,7 @@ import os
 from tqdm import tqdm
 from stringzilla import File, Str
 
-from usearch_molecules.dataset import FingerprintedDataset, shape_mixed
+from usearch_molecules.dataset import FingerprintedDataset
 
 
 def export_smiles(data):
@@ -28,6 +28,6 @@ def export_smiles(data):
 
 
 if __name__ == "__main__":
-    export_smiles(FingerprintedDataset.open("data/pubchem", shape=shape_mixed))
-    export_smiles(FingerprintedDataset.open("data/gdb13", shape=shape_mixed))
-    export_smiles(FingerprintedDataset.open("data/real", shape=shape_mixed))
+    export_smiles(FingerprintedDataset.open("data/pubchem"))
+    export_smiles(FingerprintedDataset.open("data/gdb13"))
+    export_smiles(FingerprintedDataset.open("data/real"))

@@ -1,16 +1,12 @@
-*.smi
 *.fbin
 *.ibin
 *.bbin
-*.usearch
 *.tgz
 *.tar
 *.gz
-*.parquet
 *.egg-info
-datasets
-data
 
+data
 build
 build_debug
 build_release

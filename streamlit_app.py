@@ -5,8 +5,9 @@ import py3Dmol
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from shared import FingerprintedDataset, shape_mixed
 from usearch.eval import measure_seconds
+
+from usearch_molecules.dataset import FingerprintedDataset, shape_mixed
 
 st.set_page_config(layout="wide")
 st.title("USearch Molecules")
@@ -14,6 +15,7 @@ st.title("USearch Molecules")
 max_results = 12
 results_per_row = 4
 
+search_example = st.checkbox("Example")
 search_pubchem = st.checkbox("PubChem")
 search_gdb13 = st.checkbox("GDB13")
 search_real = st.checkbox("REAL")
@@ -21,11 +23,7 @@ search_real = st.checkbox("REAL")
 
 @st.cache_resource
 def get_dataset():
-    data = FingerprintedDataset.open(
-        "data/pubchem",
-        shape=shape_mixed,
-        limit=10,
-    )
+    data = FingerprintedDataset.open("data/example", shape=shape_mixed)
     return data
 
 
@@ -44,9 +42,9 @@ def render_mol(xyz):
     xyzview = py3Dmol.view()  # (width=400,height=400)
     xyzview.addModel(xyz, "mol")
     xyzview.setStyle({"stick": {}})
-    xyzview.setBackgroundColor("black")
+    xyzview.setBackgroundColor("white")
     xyzview.zoomTo()
-    showmol(xyzview, height=500, width=500)
+    showmol(xyzview, height=400, width=400)
 
 
 molecule = st.text_input("SMILES please", "CC")
