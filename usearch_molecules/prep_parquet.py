@@ -42,7 +42,7 @@ def pubchem(dir: os.PathLike) -> RawDataset:
     """
     gzip -d CID-SMILES.gz
     """
-    file = Str(File(os.path.join(dir, "CID-SMILES")))
+    file = Str(str(File(os.path.join(dir, "CID-SMILES")))) #file = Str(File(os.path.join(dir, "CID-SMILES")))
     file = file.splitlines().shuffled(SEED)
 
     def extractor(row: str) -> Optional[str]:
@@ -66,7 +66,7 @@ def gdb13(dir: os.PathLike) -> RawDataset:
 
     lines = Strs()
     for i in range(1, 14):
-        file = Str(File(os.path.join(dir, f"{i}.smi")))
+        file = Str(str(File(os.path.join(dir, f"{i}.smi")))) #file = Str(File(os.path.join(dir, f"{i}.smi")))
         lines.extend(file.splitlines())
 
     # Let's shuffle across all the files
@@ -128,7 +128,7 @@ def real(dir: os.PathLike):
             continue
 
         logger.info(f"Loading dataset: {filename}")
-        file = Str(File(os.path.join(dir, filename)))
+        file = Str(str(File(os.path.join(dir, filename)))) #file = Str(File(os.path.join(dir, filename)))
         file_contents: Str = file.load()
         logger.info(f"Loaded dataset: {filename}")
         file_lines: Strs = file_contents.splitlines()
@@ -149,7 +149,7 @@ def real(dir: os.PathLike):
     for filename in filenames:
         filename = filename + ".smiles"
         logger.info(f"Loading dataset: {filename}")
-        file = Str(str(File(os.path.join(dir, filename))))
+        file = Str(str(File(os.path.join(dir, filename)))) #file = Str(File(os.path.join(dir, filename)))
         logger.info(f"Loaded dataset: {filename}")
         file_lines: Strs = file.splitlines()
         lines.extend(file_lines)
