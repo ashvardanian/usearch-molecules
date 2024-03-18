@@ -16,3 +16,4 @@ CMakeCache.txt
 Makefile
 encode
 __pycache__
+.DS_Store

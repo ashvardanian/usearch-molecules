@@ -149,7 +149,7 @@ def real(dir: os.PathLike):
     for filename in filenames:
         filename = filename + ".smiles"
         logger.info(f"Loading dataset: {filename}")
-        file = Str(File(os.path.join(dir, filename)))
+        file = Str(str(File(os.path.join(dir, filename))))
         logger.info(f"Loaded dataset: {filename}")
         file_lines: Strs = file.splitlines()
         lines.extend(file_lines)

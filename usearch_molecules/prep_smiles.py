@@ -21,7 +21,7 @@ def export_smiles(data):
                 f.write(str(line) + "\n")
 
         smiles_file = File(smiles_path)
-        reconstructed = Str(smiles_file).splitlines()
+        reconstructed = Str(str(smiles_file)).splitlines()
         for row, line in enumerate(table["smiles"]):
             assert str(reconstructed[row]) == str(line)
         shard.table_cached = None
