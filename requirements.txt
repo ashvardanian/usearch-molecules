@@ -5,6 +5,8 @@ numpy
 numba # For faster similarity calculation
 rdkit # For RDKit, written in C++
 jpype1 # For Chemistry Development Kit, written in Java
+transformers # For MolFormer
+pytorch-fast-transformers # `fast_transformers` for MolFormer
 
 streamlit
 streamlit-ketcher
