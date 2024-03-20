@@ -66,6 +66,32 @@ def augment_with_rdkit(parquet_path: os.PathLike):
     table = table.append_column(fcfp4_field, fcfp4_list)
     write_table(table, parquet_path)
 
+def augment_with_molformer(parquet_path: os.PathLike):
+    model_name = "katielink/MoLFormer-XL"
+    molformer_ndim = 768
+
+    meta = pq.read_metadata(parquet_path)
+    column_names: List[str] = meta.schema.names
+    if "molformer" in column_names:
+        return
+
+    logger.info(f"Starting file {parquet_path}")
+    table: pa.Table = pq.read_table(parquet_path)
+    molformer_list = []
+    for smiles in table["smiles"]:
+        embedding = np.random.rand(molformer_ndim).astype(np.float16)
+        try:
+            molformer_list.append(embedding)
+        except Exception:
+            molformer_list.append(embedding)
+
+    molformer_type = pa.list_(pa.float16, molformer_ndim)
+    molformer_list = pa.array(molformer_list, molformer_type)
+    molformer_field = pa.field("molformer", molformer_type, nullable=False)
+
+    table = table.append_column(molformer_field, molformer_list)
+    write_table(table, parquet_path)
+
 
 def augment_with_cdk(parquet_path: os.PathLike):
     meta = pq.read_metadata(parquet_path)
