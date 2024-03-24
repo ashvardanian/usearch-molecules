@@ -375,10 +375,8 @@ if __name__ == "__main__":
     processes = max(cpu_count() - 4, 1)
     # processes = 1
 
-    augment_parquet_shards("data/pubchem/parquet/", augment_with_cdk, processes)
-    augment_parquet_shards("data/gdb13/parquet/", augment_with_cdk, processes)
-    augment_parquet_shards("data/real/parquet/", augment_with_cdk, processes)
-
-    augment_parquet_shards("data/pubchem/parquet/", augment_with_rdkit, processes)
-    augment_parquet_shards("data/gdb13/parquet/", augment_with_rdkit, processes)
-    augment_parquet_shards("data/real/parquet/", augment_with_rdkit, processes)
+    for dataset in ["example", "pubchem", "gdb13", "real"]:
+        if not os.path.exists(f"data/{dataset}"):
+            continue
+        augment_parquet_shards(f"data/{dataset}/parquet", augment_with_cdk, processes)
+        augment_parquet_shards(f"data/{dataset}/parquet", augment_with_rdkit, processes)

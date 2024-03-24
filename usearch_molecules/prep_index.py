@@ -267,11 +267,10 @@ if __name__ == "__main__":
 
     processes = max(cpu_count() - 4, 1)
 
-    mono_index_maccs(FingerprintedDataset.open("data/pubchem"))
-    mono_index_mixed(FingerprintedDataset.open("data/pubchem"))
+    for dataset in ["example", "pubchem", "gdb13", "real"]:
+        if not os.path.exists(f"data/{dataset}"):
+            continue
 
-    mono_index_maccs(FingerprintedDataset.open("data/gdb13"))
-    mono_index_mixed(FingerprintedDataset.open("data/gdb13"))
-
-    mono_index_maccs(FingerprintedDataset.open("data/real"))
-    mono_index_mixed(FingerprintedDataset.open("data/real"))
+        loaded_dataset = FingerprintedDataset.open(f"data/{dataset}")
+        mono_index_maccs(loaded_dataset)
+        mono_index_mixed(loaded_dataset)

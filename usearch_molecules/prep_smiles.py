@@ -1,4 +1,5 @@
-"""Exports the strings column with SMILES from Parquet files into newline-delimited files for simpler parsing with Stringzilla."""
+"""Exports the strings column with SMILES from Parquet files into newline-delimited files for simpler parsing with StringZilla."""
+
 import os
 
 from tqdm import tqdm
@@ -21,13 +22,14 @@ def export_smiles(data):
                 f.write(str(line) + "\n")
 
         smiles_file = File(smiles_path)
-        reconstructed = Str(str(smiles_file)).splitlines()
+        reconstructed = smiles_file.splitlines()
         for row, line in enumerate(table["smiles"]):
             assert str(reconstructed[row]) == str(line)
         shard.table_cached = None
 
 
 if __name__ == "__main__":
-    export_smiles(FingerprintedDataset.open("data/pubchem"))
-    export_smiles(FingerprintedDataset.open("data/gdb13"))
-    export_smiles(FingerprintedDataset.open("data/real"))
+    for dataset in ["example", "pubchem", "gdb13", "real"]:
+        if not os.path.exists(f"data/{dataset}"):
+            continue
+        export_smiles(FingerprintedDataset.open(f"data/{dataset}"))

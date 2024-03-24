@@ -221,9 +221,9 @@ In other words, processing 1 TB of molecules doesn't require 1 TB of RAM.
 Everything happens in a "gliding-window" fashion, with computationally intensive parts split between processes and threads.
 
 ```sh
-python prep_schedule.py # Prepare Parquet files
-python prep_encode.py # Build USearch indexes
-python prep_smiles.py # Export SMILES new-line delimited files to simplify serving
+python usearch_molecules/prep_schedule.py # Prepare Parquet files
+python usearch_molecules/prep_encode.py # Build USearch indexes
+python usearch_molecules/prep_smiles.py # Export SMILES new-line delimited files to simplify serving
 ```
 
 Once completed, datasets have been uploaded to S3:

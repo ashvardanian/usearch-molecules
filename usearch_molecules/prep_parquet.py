@@ -1,4 +1,5 @@
 """Exports all molecules from the PubChem, GDB13 and Enamine REAL datasets into Parquet shards, with up to 1 Million molecules in every granule."""
+
 import os
 import logging
 from dataclasses import dataclass
@@ -38,11 +39,41 @@ class RawDataset:
         return result
 
 
-def pubchem(dir: os.PathLike) -> RawDataset:
+def example(dir: os.PathLike) -> RawDataset:
     """
     gzip -d CID-SMILES.gz
     """
-    file = Str(str(File(os.path.join(dir, "CID-SMILES")))) #file = Str(File(os.path.join(dir, "CID-SMILES")))
+
+    lines = Strs()
+    filenames = (
+        "0000000000-0001000000.smi",
+        "0001000000-0002000000.smi",
+    )
+    for filename in filenames:
+        file = File(os.path.join(dir, "smiles", filename))
+        lines.extend(file.splitlines())
+
+    # Let's shuffle across all the files
+    lines.shuffle(SEED)
+
+    def extractor(row: str) -> Optional[str]:
+        row = row.strip("\n")
+        if len(row) > 0:
+            return row
+        return None
+
+    return RawDataset(
+        lines=lines,
+        extractor=extractor,
+    )
+
+
+def pubchem(dir: os.PathLike, filename: str = "CID-SMILES") -> RawDataset:
+    """
+    gzip -d CID-SMILES.gz
+    """
+
+    file = File(os.path.join(dir, filename))
     file = file.splitlines().shuffled(SEED)
 
     def extractor(row: str) -> Optional[str]:
@@ -66,7 +97,7 @@ def gdb13(dir: os.PathLike) -> RawDataset:
 
     lines = Strs()
     for i in range(1, 14):
-        file = Str(str(File(os.path.join(dir, f"{i}.smi")))) #file = Str(File(os.path.join(dir, f"{i}.smi")))
+        file = File(os.path.join(dir, f"{i}.smi"))
         lines.extend(file.splitlines())
 
     # Let's shuffle across all the files
@@ -87,11 +118,11 @@ def gdb13(dir: os.PathLike) -> RawDataset:
 def real(dir: os.PathLike):
     """Enamine REAL dataset only requires both cleanup and concatenating
 
-    This dataset is so large, that we split the prcess into a few steps.
+    This dataset is so large, that we split the process into a few steps.
 
     1.  Decompress `.cxsmiles.bz2` files into `.cxsmiles`.
     2.  Wipe metadata, exporting `.smiles` files, reducing size by 3x.
-    3.  Load all the `.smiles` files with Stringzilla, split, random shuffle.
+    3.  Load all the `.smiles` files with StringZilla, split, random shuffle.
     """
 
     filenames = [
@@ -128,7 +159,7 @@ def real(dir: os.PathLike):
             continue
 
         logger.info(f"Loading dataset: {filename}")
-        file = Str(str(File(os.path.join(dir, filename)))) #file = Str(File(os.path.join(dir, filename)))
+        file = File(os.path.join(dir, filename))
         file_contents: Str = file.load()
         logger.info(f"Loaded dataset: {filename}")
         file_lines: Strs = file_contents.splitlines()
@@ -149,7 +180,7 @@ def real(dir: os.PathLike):
     for filename in filenames:
         filename = filename + ".smiles"
         logger.info(f"Loading dataset: {filename}")
-        file = Str(str(File(os.path.join(dir, filename)))) #file = Str(File(os.path.join(dir, filename)))
+        file = File(os.path.join(dir, filename))
         logger.info(f"Loaded dataset: {filename}")
         file_lines: Strs = file.splitlines()
         lines.extend(file_lines)
@@ -246,6 +277,11 @@ if __name__ == "__main__":
 
     processes = max(cpu_count() - 4, 1)
 
-    export_parquet_shards(gdb13("data/gdb13"), "data/gdb13", processes)
-    export_parquet_shards(pubchem("data/pubchem"), "data/pubchem", processes)
-    export_parquet_shards(real("data/real"), "data/real", processes)
+    if os.path.exists("data/example"):
+        export_parquet_shards(example("data/example"), "data/example", processes)
+    if os.path.exists("data/pubchem"):
+        export_parquet_shards(pubchem("data/pubchem"), "data/pubchem", processes)
+    if os.path.exists("data/gdb13"):
+        export_parquet_shards(gdb13("data/gdb13"), "data/gdb13", processes)
+    if os.path.exists("data/real"):
+        export_parquet_shards(real("data/real"), "data/real", processes)

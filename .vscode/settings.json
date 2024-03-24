@@ -78,4 +78,16 @@
         "typeindex": "cpp",
         "typeinfo": "cpp"
     },
+    "cSpell.words": [
+        "ecfp",
+        "fcfp",
+        "maccs",
+        "numba",
+        "pubchem",
+        "pyarrow",
+        "rdkit",
+        "tanimoto",
+        "usearch",
+        "Vardanian"
+    ],
 }
