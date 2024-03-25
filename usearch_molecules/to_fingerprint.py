@@ -74,6 +74,44 @@ def smiles_to_pubchem(smiles: str) -> Tuple[np.ndarray]:
     return (bitset,)
 
 
+_coati2_model = None
+_coati2_tokenizer = None
+
+
+def smiles_to_coati2(smiles: List[str], device: str = None) -> np.ndarray:
+    """Uses COATI2 embedding model for small molecules."""
+    global _coati2_model
+    global _coati2_tokenizer
+
+    # COATI dependencies are quite heavy. Lets avoid them until this functioned is called.
+    if _coati2_model is None:
+        import torch
+        from coati.models.simple_coati2.io import load_coati2
+        from coati.generative.coati_purifications import embed_smiles_batch
+
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Model parameters are pulled from the url and stored in a local models/ dir.
+        # Tutorial: https://github.com/terraytherapeutics/COATI/blob/main/examples/coati2/tutorial.ipynb
+        encoder, tokenizer = load_coati2(
+            freeze=True,
+            device=torch.device(device),
+            doc_url="s3://terray-public/models/coati2_chiral_03-08-24.pkl",
+        )
+        _coati2_model = encoder
+        _coati2_tokenizer = tokenizer
+    else:
+        from coati.generative.coati_purifications import embed_smiles_batch
+
+    if isinstance(smiles, str):
+        smiles = [smiles]
+    smiles = [Chem.CanonSmiles(smile) for smile in smiles]
+    vecs = embed_smiles_batch(smiles, _coati2_model, _coati2_tokenizer)
+    vecs = vecs.cpu().numpy()
+    return vecs
+
+
 @dataclass
 class FingerprintShape:
     """Represents the shape of a hybrid fingerprint, potentially containing multiple concatenated bit-vectors."""

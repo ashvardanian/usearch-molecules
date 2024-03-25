@@ -19,6 +19,7 @@ from usearch_molecules.metrics_numba import (
 from usearch_molecules.to_fingerprint import (
     smiles_to_maccs_ecfp4_fcfp4,
     smiles_to_pubchem,
+    smiles_to_coati2,
     shape_mixed,
     shape_maccs,
 )
@@ -87,6 +88,45 @@ def augment_with_cdk(parquet_path: os.PathLike):
     pubchem_field = pa.field("pubchem", pa.binary(111), nullable=False)
 
     table = table.append_column(pubchem_field, pubchem_list)
+    write_table(table, parquet_path)
+
+
+def augment_with_coati2(
+    parquet_path: os.PathLike,
+    device: str = None,
+    batch_size: int = 256,
+):
+    from tqdm import tqdm
+
+    # Now load the file and augment it with the COATI2 embeddings
+    meta = pq.read_metadata(parquet_path)
+    column_names: List[str] = meta.schema.names
+    # if "coati2" in column_names:
+    #     return
+
+    logger.info(f"Starting file {parquet_path}")
+    table: pa.Table = pq.read_table(parquet_path)
+    coati2_list = []
+
+    # Prepare for batching
+    smiles_list = table["smiles"].to_pandas()
+    total_rows = len(smiles_list)
+
+    # Set up tqdm for the processing loop
+    with tqdm(total=total_rows, desc="Inferencing", unit="molecules") as pbar:
+        for i in range(0, total_rows, batch_size):
+            batch_smiles = smiles_list[i : i + batch_size]
+            batch_size_current = len(batch_smiles)
+            vecs = smiles_to_coati2(batch_smiles, device=device).astype(np.float32)
+            assert vecs.shape[1] == 512
+            coati2_list.extend(vecs)
+            pbar.update(batch_size_current)
+
+    coati2_list = [pa.array(vec, type=pa.float32()) for vec in coati2_list]
+    coati2_list = pa.array(coati2_list, pa.list_(pa.float32(), 512))
+    coati2_field = pa.field("coati2", pa.list_(pa.float32(), 512), nullable=False)
+
+    table = table.append_column(coati2_field, coati2_list)
     write_table(table, parquet_path)
 
 
@@ -380,3 +420,6 @@ if __name__ == "__main__":
             continue
         augment_parquet_shards(f"data/{dataset}/parquet", augment_with_cdk, processes)
         augment_parquet_shards(f"data/{dataset}/parquet", augment_with_rdkit, processes)
+        augment_parquet_shards(
+            f"data/{dataset}/parquet", augment_with_coati2, processes
+        )
